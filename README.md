@@ -1,17 +1,16 @@
 # zed-opencv
 
-This sample demonstrates how to grab images and disparity map with the ZED SDK
-and link the results with OpenCV.
+**This sample is designed to work with the ZED stereo camera only and require the ZED SDK, more information : https://www.stereolabs.com**
+
+It demonstrates how to grab images and disparity map with the ZED SDK and link the results with OpenCV.
 
 **Warning :**
  - GPU->CPU readback is time consuming
  - This samples is not designed to operate in RealTime
      
-Both images and depth/disparity map are displayed with OpenCV.                                 
+Both images and depth/disparity map are displayed.                                 
 Most of the functions of the ZED SDK are linked with a key press event (using OpenCV).
   
-This sample needs OpenCV.
-
 ##Build the program
 
 Open a terminal in With OpenCV directory and execute the following command:
