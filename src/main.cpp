@@ -34,6 +34,7 @@
 #include <string.h>
 #include <ctime>
 #include <chrono>
+#include <thread>
 
 //opencv includes
 #include <opencv2/opencv.hpp>
@@ -74,14 +75,14 @@ static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, v
 // save function using opencv
 
 void saveSbSimage(sl::zed::Camera* zed, std::string filename) {
-	sl::zed::resolution imSize = zed->getImageSize();
+    sl::zed::resolution imSize = zed->getImageSize();
 
     cv::Mat SbS(imSize.height, imSize.width * 2, CV_8UC4);
     cv::Mat leftIm(SbS, cv::Rect(0, 0, imSize.width, imSize.height));
     cv::Mat rightIm(SbS, cv::Rect(imSize.width, 0, imSize.width, imSize.height));
 
-	slMat2cvMat(zed->retrieveImage(sl::zed::SIDE::LEFT)).copyTo(leftIm);
-	slMat2cvMat(zed->retrieveImage(sl::zed::SIDE::RIGHT)).copyTo(rightIm);
+    slMat2cvMat(zed->retrieveImage(sl::zed::SIDE::LEFT)).copyTo(leftIm);
+    slMat2cvMat(zed->retrieveImage(sl::zed::SIDE::RIGHT)).copyTo(rightIm);
 
     cv::imshow("Saving Image", SbS);
     cv::cvtColor(SbS, SbS, CV_RGBA2RGB);
@@ -100,25 +101,25 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-	sl::zed::SENSING_MODE dm_type = sl::zed::RAW;
-	sl::zed::Camera* zed;
+    sl::zed::SENSING_MODE dm_type = sl::zed::RAW;
+    sl::zed::Camera* zed;
 
     if (argc == 1) // Use in Live Mode
-		zed = new sl::zed::Camera(sl::zed::HD1080);
+        zed = new sl::zed::Camera(sl::zed::HD1080);
     else // Use in SVO playback mode
-		zed = new sl::zed::Camera(argv[1]);
+        zed = new sl::zed::Camera(argv[1]);
 
     int width = zed->getImageSize().width;
     int height = zed->getImageSize().height;
 
-	sl::zed::ERRCODE err = zed->init(sl::zed::MODE::PERFORMANCE, 0, true);
+    sl::zed::ERRCODE err = zed->init(sl::zed::MODE::PERFORMANCE, 0, true);
 
     // ERRCODE display
-	std::cout << sl::zed::errcode2str(err) << std::endl;
+    std::cout << sl::zed::errcode2str(err) << std::endl;
 
 
     // Quit if an error occurred
-	if (err != sl::zed::SUCCESS) {
+    if (err != sl::zed::SUCCESS) {
         delete zed;
         return 1;
     }
@@ -141,9 +142,9 @@ int main(int argc, char **argv) {
     cv::Mat confidencemapDisplay(DisplaySize, CV_8UC4);
 
     /* Init mouse callback */
-	sl::zed::Mat depth;
+    sl::zed::Mat depth;
     zed->grab(dm_type);
-	depth = zed->retrieveMeasure(sl::zed::MEASURE::DEPTH); // Get the pointer
+    depth = zed->retrieveMeasure(sl::zed::MEASURE::DEPTH); // Get the pointer
     // Set the structure
     mouseStruct._image = cv::Size(width, height);
     mouseStruct._resize = DisplaySize;
@@ -157,7 +158,7 @@ int main(int argc, char **argv) {
     cv::setMouseCallback(mouseStruct.name, onMouseCallback, (void*) &mouseStruct);
     cv::namedWindow("VIEW", cv::WINDOW_AUTOSIZE);
 
-    std::cout<< "Press 'q' to exit"<<std::endl;
+    std::cout << "Press 'q' to exit" << std::endl;
 
 
     //loop until 'q' is pressed
@@ -167,138 +168,139 @@ int main(int argc, char **argv) {
         zed->setConfidenceThreshold(ConfidenceIdx);
 
         // Get frames and launch the computation
-        bool res = zed->grab(dm_type);
+        if (!zed->grab(dm_type)) {
 
-		depth = zed->retrieveMeasure(sl::zed::MEASURE::DEPTH); // Get the pointer
+            depth = zed->retrieveMeasure(sl::zed::MEASURE::DEPTH); // Get the pointer
 
-        // The following is the best way to save a disparity map/ Image / confidence map in Opencv Mat.
-        // Be Careful, if you don't save the buffer/data on your own, it will be replace by a next retrieve (retrieveImage, NormalizeMeasure, getView....)
-        // !! Disparity, Depth, confidence are in 8U,C4 if normalized format !! //
-        // !! Disparity, Depth, confidence are in 32F,C1 if only retrieve !! //
+            // The following is the best way to save a disparity map/ Image / confidence map in Opencv Mat.
+            // Be Careful, if you don't save the buffer/data on your own, it will be replace by a next retrieve (retrieveImage, NormalizeMeasure, getView....)
+            // !! Disparity, Depth, confidence are in 8U,C4 if normalized format !! //
+            // !! Disparity, Depth, confidence are in 32F,C1 if only retrieve !! //
 
-        /***************  DISPLAY:  ***************/
-        // Normalize the DISPARITY / DEPTH map in order to use the full color range of grey level image
-        if (DisplayDisp)
-			slMat2cvMat(zed->normalizeMeasure(sl::zed::MEASURE::DISPARITY)).copyTo(disp);
-        else
-			slMat2cvMat(zed->normalizeMeasure(sl::zed::MEASURE::DEPTH)).copyTo(disp);
-
-
-        // To get the depth at a given position, click on the DISPARITY / DEPTH map image
-        cv::resize(disp, dispDisplay, DisplaySize);
-        imshow(mouseStruct.name, dispDisplay);
-
-        if (displayConfidenceMap) {
-			slMat2cvMat(zed->normalizeMeasure(sl::zed::MEASURE::CONFIDENCE)).copyTo(confidencemap);
-            cv::resize(confidencemap, confidencemapDisplay, DisplaySize);
-            imshow("confidence", confidencemapDisplay);
-        }
-
-        //Even if Left and Right images are still available through getView() function, it's better since v0.8.1 to use retrieveImage for cpu readback because GPU->CPU is done async during depth estimation.
-        // Therefore :
-        // -- if disparity estimation is enabled in grab function, retrieveImage will take no time because GPU->CPU copy has already been done during disp estimation
-        // -- if disparity estimation is not enabled, GPU->CPU copy is done in retrieveImage fct, and this function will take the time of copy.
-        if (ViewID == sl::zed::STEREO_LEFT || ViewID == sl::zed::STEREO_RIGHT)
-			slMat2cvMat(zed->retrieveImage(static_cast<sl::zed::SIDE> (ViewID))).copyTo(anaplyph);
-        else
-			slMat2cvMat(zed->getView(static_cast<sl::zed::VIEW_MODE> (ViewID))).copyTo(anaplyph);
-
-        cv::resize(anaplyph, anaplyphDisplay, DisplaySize);
-        imshow("VIEW", anaplyphDisplay);
-
-        key = cv::waitKey(5);
-
-        // Keyboard shortcuts
-        switch (key) {
-                // ______________  THRESHOLD __________________
-            case 'b':
-                ConfidenceIdx -= 10;
-                break;
-            case 'n':
-                ConfidenceIdx += 10;
-                break;
-
-                //re-compute stereo alignment
-            case 'a':
-                zed->reset();
-                break;
-
-                //Change camera settings (here --> gain)
-            case 'g': //increase gain of 1
-            {
-                int current_gain = zed->getCameraSettingsValue(sl::zed::ZED_GAIN) + 1;
-                zed->setCameraSettingsValue(sl::zed::ZED_GAIN, current_gain);
-				std::cout << "set Gain to " << current_gain << std::endl;
-            }
-                break;
-
-            case 'h': //decrease gain of 1
-            {
-                int current_gain = zed->getCameraSettingsValue(sl::zed::ZED_GAIN) - 1;
-                zed->setCameraSettingsValue(sl::zed::ZED_GAIN, current_gain);
-				std::cout << "set Gain to " << current_gain << std::endl;
-            }
-                break;
+            /***************  DISPLAY:  ***************/
+            // Normalize the DISPARITY / DEPTH map in order to use the full color range of grey level image
+            if (DisplayDisp)
+                slMat2cvMat(zed->normalizeMeasure(sl::zed::MEASURE::DISPARITY)).copyTo(disp);
+            else
+                slMat2cvMat(zed->normalizeMeasure(sl::zed::MEASURE::DEPTH)).copyTo(disp);
 
 
-                // ______________  VIEW __________________
-            case '0': // left
-                ViewID = 0;
-                break;
-            case '1': // right
-                ViewID = 1;
-                break;
-            case '2': // anaglyph
-                ViewID = 2;
-                break;
-            case '3': // gray scale diff
-                ViewID = 3;
-                break;
-            case '4': // Side by side
-                ViewID = 4;
-                break;
-            case '5': // overlay
-                ViewID = 5;
-                break;
+            // To get the depth at a given position, click on the DISPARITY / DEPTH map image
+            cv::resize(disp, dispDisplay, DisplaySize);
+            imshow(mouseStruct.name, dispDisplay);
 
-                // ______________  Display Confidence Map __________________
-            case 's':
-                displayConfidenceMap = !displayConfidenceMap;
-                break;
-
-                //______________ SAVE ______________
-            case 'w': // image
-				saveSbSimage(zed, std::string("ZEDImage") + std::to_string(count) + std::string(".png"));
-                count++;
-                break;
-
-            case 'v': // disparity
-            {
-				std::string filename = std::string(("ZEDDisparity") + std::to_string(count) + std::string(".png"));
-                cv::Mat dispSnapshot;
-                disp.copyTo(dispSnapshot);
-                cv::imshow("Saving Disparity", dispSnapshot);
-                cv::imwrite(filename, dispSnapshot);
-                count++;
-                break;
+            if (displayConfidenceMap) {
+                slMat2cvMat(zed->normalizeMeasure(sl::zed::MEASURE::CONFIDENCE)).copyTo(confidencemap);
+                cv::resize(confidencemap, confidencemapDisplay, DisplaySize);
+                imshow("confidence", confidencemapDisplay);
             }
 
-            case 'r':
-				dm_type = sl::zed::SENSING_MODE::RAW;
-				std::cout << "SENSING_MODE: Raw" << std::endl;
-                break;
-            case 'f':
-				dm_type = sl::zed::SENSING_MODE::FULL;
-				std::cout << "SENSING_MODE: FULL" << std::endl;
-                break;
+            //Even if Left and Right images are still available through getView() function, it's better since v0.8.1 to use retrieveImage for cpu readback because GPU->CPU is done async during depth estimation.
+            // Therefore :
+            // -- if disparity estimation is enabled in grab function, retrieveImage will take no time because GPU->CPU copy has already been done during disp estimation
+            // -- if disparity estimation is not enabled, GPU->CPU copy is done in retrieveImage fct, and this function will take the time of copy.
+            if (ViewID == sl::zed::STEREO_LEFT || ViewID == sl::zed::STEREO_RIGHT)
+                slMat2cvMat(zed->retrieveImage(static_cast<sl::zed::SIDE> (ViewID))).copyTo(anaplyph);
+            else
+                slMat2cvMat(zed->getView(static_cast<sl::zed::VIEW_MODE> (ViewID))).copyTo(anaplyph);
 
-            case 'd':
-                DisplayDisp = !DisplayDisp;
-                break;
-        }
+            cv::resize(anaplyph, anaplyphDisplay, DisplaySize);
+            imshow("VIEW", anaplyphDisplay);
 
-        ConfidenceIdx = ConfidenceIdx < 1 ? 1 : ConfidenceIdx;
-        ConfidenceIdx = ConfidenceIdx > 100 ? 100 : ConfidenceIdx;
+            key = cv::waitKey(5);
+
+            // Keyboard shortcuts
+            switch (key) {
+                    // ______________  THRESHOLD __________________
+                case 'b':
+                    ConfidenceIdx -= 10;
+                    break;
+                case 'n':
+                    ConfidenceIdx += 10;
+                    break;
+
+                    //re-compute stereo alignment
+                    /*case 'a':
+                        zed->resetSelfCalibration(); // renamed in ZED SDK v0.9.3
+                        break;*/
+
+                    //Change camera settings (here --> gain)
+                case 'g': //increase gain of 1
+                {
+                    int current_gain = zed->getCameraSettingsValue(sl::zed::ZED_GAIN) + 1;
+                    zed->setCameraSettingsValue(sl::zed::ZED_GAIN, current_gain);
+                    std::cout << "set Gain to " << current_gain << std::endl;
+                }
+                    break;
+
+                case 'h': //decrease gain of 1
+                {
+                    int current_gain = zed->getCameraSettingsValue(sl::zed::ZED_GAIN) - 1;
+                    zed->setCameraSettingsValue(sl::zed::ZED_GAIN, current_gain);
+                    std::cout << "set Gain to " << current_gain << std::endl;
+                }
+                    break;
+
+
+                    // ______________  VIEW __________________
+                case '0': // left
+                    ViewID = 0;
+                    break;
+                case '1': // right
+                    ViewID = 1;
+                    break;
+                case '2': // anaglyph
+                    ViewID = 2;
+                    break;
+                case '3': // gray scale diff
+                    ViewID = 3;
+                    break;
+                case '4': // Side by side
+                    ViewID = 4;
+                    break;
+                case '5': // overlay
+                    ViewID = 5;
+                    break;
+
+                    // ______________  Display Confidence Map __________________
+                case 's':
+                    displayConfidenceMap = !displayConfidenceMap;
+                    break;
+
+                    //______________ SAVE ______________
+                case 'w': // image
+                    saveSbSimage(zed, std::string("ZEDImage") + std::to_string(count) + std::string(".png"));
+                    count++;
+                    break;
+
+                case 'v': // disparity
+                {
+                    std::string filename = std::string(("ZEDDisparity") + std::to_string(count) + std::string(".png"));
+                    cv::Mat dispSnapshot;
+                    disp.copyTo(dispSnapshot);
+                    cv::imshow("Saving Disparity", dispSnapshot);
+                    cv::imwrite(filename, dispSnapshot);
+                    count++;
+                    break;
+                }
+
+                case 'r':
+                    dm_type = sl::zed::SENSING_MODE::RAW;
+                    std::cout << "SENSING_MODE: Raw" << std::endl;
+                    break;
+                case 'f':
+                    dm_type = sl::zed::SENSING_MODE::FULL;
+                    std::cout << "SENSING_MODE: FULL" << std::endl;
+                    break;
+
+                case 'd':
+                    DisplayDisp = !DisplayDisp;
+                    break;
+            }
+
+            ConfidenceIdx = ConfidenceIdx < 1 ? 1 : ConfidenceIdx;
+            ConfidenceIdx = ConfidenceIdx > 100 ? 100 : ConfidenceIdx;
+        } else std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
 
     delete zed;
