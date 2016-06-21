@@ -34,16 +34,13 @@
 #include <string.h>
 #include <ctime>
 #include <chrono>
-#include <thread>
 
 //opencv includes
 #include <opencv2/opencv.hpp>
 
 //ZED Includes
 #include <zed/Camera.hpp>
-
-
-//Define the structure and callback for mouse event
+#include <zed/utils/GlobalDefine.hpp>
 
 typedef struct mouseOCVStruct {
     float* data;
@@ -51,6 +48,7 @@ typedef struct mouseOCVStruct {
     cv::Size _image;
     cv::Size _resize;
     std::string name;
+    std::string unit;
 } mouseOCV;
 
 mouseOCV mouseStruct;
@@ -63,12 +61,18 @@ static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, v
         int x_int = (x * data->_image.width / data->_resize.width);
 
         float* ptr_image_num = (float*) ((int8_t*) data->data + y_int * data->step);
-        float dist = ptr_image_num[x_int] / 1000.f;
+        float dist = ptr_image_num[x_int];
 
-        if (dist > 0.)
-            printf("\n%s : %2.2f m\n", data->name.c_str(), dist);
-        else
-            printf("\n : NAN\n");
+        if (isValidMeasure(dist))
+            printf("\n%s : %2.2f %s\n", data->name.c_str(), dist, data->unit.c_str());
+        else {
+            if (dist == TOO_FAR)
+                printf("\n%s is too far.\n", data->name.c_str(), dist, data->unit.c_str());
+            else if (dist == TOO_CLOSE)
+                printf("\n%s is too close.\n", data->name.c_str(), dist, data->unit.c_str());
+            else
+                printf("\n%s not avaliable\n", data->name.c_str(), dist, data->unit.c_str());
+        }
     }
 }
 
@@ -95,34 +99,54 @@ void saveSbSimage(sl::zed::Camera* zed, std::string filename) {
 
 int main(int argc, char **argv) {
 
-    if (argc > 2) {
-        std::cout << "Only the path of a SVO can be passed in arg" << std::endl;
-        //Sleep(2000);
+    if (argc > 3) {
+        std::cout << "Only the path of a SVO or a InitParams file can be passed in arg." << std::endl;
         return -1;
     }
 
-    sl::zed::SENSING_MODE dm_type = sl::zed::RAW;
+    // quick check of arguments
+    bool readSVO = false;
+    std::string SVOName;
+    bool loadParams = false;
+    std::string ParamsName;
+    if (argc > 1) {
+        std::string _arg;
+        for (int i = 1; i < argc; i++) {
+            _arg = argv[i];
+            if (_arg.find(".svo") != std::string::npos) { // if a SVO is given we save its name
+                readSVO = true;
+                SVOName = _arg;
+            }
+            if (_arg.find(".ZEDinitParam") != std::string::npos) { // if a parameters file is given we save its name
+                loadParams = true;
+                ParamsName = _arg;
+            }
+        }
+    }
+
     sl::zed::Camera* zed;
 
-    if (argc == 1) // Use in Live Mode
-        zed = new sl::zed::Camera(sl::zed::HD1080);
+    if (!readSVO) // Use in Live Mode
+        zed = new sl::zed::Camera(sl::zed::HD720);
     else // Use in SVO playback mode
-        zed = new sl::zed::Camera(argv[1]);
+        zed = new sl::zed::Camera(SVOName);
 
-    int width = zed->getImageSize().width;
-    int height = zed->getImageSize().height;
+    // define a struct of parameters for the initialization
+    sl::zed::InitParams params;
 
-    sl::zed::ERRCODE err = zed->init(sl::zed::MODE::PERFORMANCE, 0, true);
+    if (loadParams)// a file is given in argument, we load it
+        params.load(ParamsName);
 
-    // ERRCODE display
-    std::cout << sl::zed::errcode2str(err) << std::endl;
-
-
-    // Quit if an error occurred
-    if (err != sl::zed::SUCCESS) {
+ 
+    sl::zed::ERRCODE err = zed->init(params);
+    std::cout << "Error code : " << sl::zed::errcode2str(err) << std::endl;
+    if (err != sl::zed::SUCCESS) {// Quit if an error occurred
         delete zed;
         return 1;
     }
+
+    // Save the initialization parameters
+    params.save("MyParam");
 
     char key = ' ';
     int ViewID = 2;
@@ -132,6 +156,9 @@ int main(int argc, char **argv) {
     bool DisplayDisp = true;
     bool displayConfidenceMap = false;
 
+    int width = zed->getImageSize().width;
+    int height = zed->getImageSize().height;
+
     cv::Mat disp(height, width, CV_8UC4);
     cv::Mat anaplyph(height, width, CV_8UC4);
     cv::Mat confidencemap(height, width, CV_8UC4);
@@ -140,6 +167,8 @@ int main(int argc, char **argv) {
     cv::Mat dispDisplay(DisplaySize, CV_8UC4);
     cv::Mat anaplyphDisplay(DisplaySize, CV_8UC4);
     cv::Mat confidencemapDisplay(DisplaySize, CV_8UC4);
+
+    sl::zed::SENSING_MODE dm_type = sl::zed::STANDARD;
 
     /* Init mouse callback */
     sl::zed::Mat depth;
@@ -151,7 +180,11 @@ int main(int argc, char **argv) {
     mouseStruct.data = (float*) depth.data;
     mouseStruct.step = depth.step;
     mouseStruct.name = "DEPTH";
+    mouseStruct.unit = unit2str(params.unit);
     /***/
+
+    // the depth is limited to 20. METERS as define in zed::init()
+    zed->setDepthClampValue(5000);
 
     //create Opencv Windows
     cv::namedWindow(mouseStruct.name, cv::WINDOW_AUTOSIZE);
@@ -160,15 +193,26 @@ int main(int argc, char **argv) {
 
     std::cout << "Press 'q' to exit" << std::endl;
 
+    //Jetson only. Execute the calling thread on core 2
+    sl::zed::Camera::sticktoCPUCore(2);
+
+    sl::zed::ZED_SELF_CALIBRATION_STATUS old_self_calibration_status = sl::zed::SELF_CALIBRATION_NOT_CALLED;
 
     //loop until 'q' is pressed
     while (key != 'q') {
         // DisparityMap filtering
-        //zed->setDispReliability(reliabilityIdx); !!function name has been change in Release 0.8 --see ChangeLog
         zed->setConfidenceThreshold(ConfidenceIdx);
 
         // Get frames and launch the computation
-        if (!zed->grab(dm_type)) {
+        bool res = zed->grab(dm_type);
+
+        if (!res) {
+            // Estimated rotation :
+
+            if (old_self_calibration_status != zed->getSelfCalibrationStatus()) {
+                std::cout << "Self Calibration Status : " << sl::zed::statuscode2str(zed->getSelfCalibrationStatus()) << std::endl;
+                old_self_calibration_status = zed->getSelfCalibrationStatus();
+            }
 
             depth = zed->retrieveMeasure(sl::zed::MEASURE::DEPTH); // Get the pointer
 
@@ -176,6 +220,7 @@ int main(int argc, char **argv) {
             // Be Careful, if you don't save the buffer/data on your own, it will be replace by a next retrieve (retrieveImage, NormalizeMeasure, getView....)
             // !! Disparity, Depth, confidence are in 8U,C4 if normalized format !! //
             // !! Disparity, Depth, confidence are in 32F,C1 if only retrieve !! //
+
 
             /***************  DISPLAY:  ***************/
             // Normalize the DISPARITY / DEPTH map in order to use the full color range of grey level image
@@ -220,9 +265,9 @@ int main(int argc, char **argv) {
                     break;
 
                     //re-compute stereo alignment
-                    /*case 'a':
-                        zed->resetSelfCalibration(); // renamed in ZED SDK v0.9.3
-                        break;*/
+                case 'a':
+                    zed->resetSelfCalibration();
+                    break;
 
                     //Change camera settings (here --> gain)
                 case 'g': //increase gain of 1
@@ -285,12 +330,12 @@ int main(int argc, char **argv) {
                 }
 
                 case 'r':
-                    dm_type = sl::zed::SENSING_MODE::RAW;
-                    std::cout << "SENSING_MODE: Raw" << std::endl;
+                    dm_type = sl::zed::SENSING_MODE::STANDARD;
+                    std::cout << "SENSING_MODE " << sensing_mode2str(dm_type) << std::endl;
                     break;
                 case 'f':
-                    dm_type = sl::zed::SENSING_MODE::FULL;
-                    std::cout << "SENSING_MODE: FULL" << std::endl;
+                    dm_type = sl::zed::SENSING_MODE::FILL;
+                    std::cout << "SENSING_MODE " << sensing_mode2str(dm_type) << std::endl;
                     break;
 
                 case 'd':
@@ -300,7 +345,7 @@ int main(int argc, char **argv) {
 
             ConfidenceIdx = ConfidenceIdx < 1 ? 1 : ConfidenceIdx;
             ConfidenceIdx = ConfidenceIdx > 100 ? 100 : ConfidenceIdx;
-        } else std::this_thread::sleep_for(std::chrono::microseconds(500));
+        }
     }
 
     delete zed;
