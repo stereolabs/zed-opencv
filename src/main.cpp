@@ -137,7 +137,10 @@ int main(int argc, char **argv) {
     if (loadParams)// a file is given in argument, we load it
         params.load(ParamsName);
 
- 
+    //activate verbosity in console window.
+    params.verbose = true;
+
+
     sl::zed::ERRCODE err = zed->init(params);
     std::cout << "Error code : " << sl::zed::errcode2str(err) << std::endl;
     if (err != sl::zed::SUCCESS) {// Quit if an error occurred
@@ -145,11 +148,15 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // Save the initialization parameters
+    // Save the initialization parameters //use the file created in any of your zed based application
     params.save("MyParam");
 
+
+    //in case you want to save a SVO during use....uncomment following line
+    //zed->enableRecording("zed_rec.svo");
+
     char key = ' ';
-    int ViewID = 2;
+    int ViewID = 0;
     int count = 0;
     int ConfidenceIdx = 100;
 
@@ -160,12 +167,12 @@ int main(int argc, char **argv) {
     int height = zed->getImageSize().height;
 
     cv::Mat disp(height, width, CV_8UC4);
-    cv::Mat anaplyph(height, width, CV_8UC4);
+    cv::Mat anaglyph(height, width, CV_8UC4);
     cv::Mat confidencemap(height, width, CV_8UC4);
 
     cv::Size DisplaySize(720, 404);
     cv::Mat dispDisplay(DisplaySize, CV_8UC4);
-    cv::Mat anaplyphDisplay(DisplaySize, CV_8UC4);
+    cv::Mat anaglyphDisplay(DisplaySize, CV_8UC4);
     cv::Mat confidencemapDisplay(DisplaySize, CV_8UC4);
 
     sl::zed::SENSING_MODE dm_type = sl::zed::STANDARD;
@@ -184,7 +191,7 @@ int main(int argc, char **argv) {
     /***/
 
     // the depth is limited to 20. METERS as define in zed::init()
-    zed->setDepthClampValue(5000);
+    zed->setDepthClampValue(10000);
 
     //create Opencv Windows
     cv::namedWindow(mouseStruct.name, cv::WINDOW_AUTOSIZE);
@@ -207,7 +214,9 @@ int main(int argc, char **argv) {
         bool res = zed->grab(dm_type);
 
         if (!res) {
-            // Estimated rotation :
+
+            //in case you activated recording, you can called a record if you want to save that frame in the svo
+            //zed->record();
 
             if (old_self_calibration_status != zed->getSelfCalibrationStatus()) {
                 std::cout << "Self Calibration Status : " << sl::zed::statuscode2str(zed->getSelfCalibrationStatus()) << std::endl;
@@ -240,17 +249,17 @@ int main(int argc, char **argv) {
                 imshow("confidence", confidencemapDisplay);
             }
 
-            //Even if Left and Right images are still available through getView() function, it's better since v0.8.1 to use retrieveImage for cpu readback because GPU->CPU is done async during depth estimation.
-            // Therefore :
-            // -- if disparity estimation is enabled in grab function, retrieveImage will take no time because GPU->CPU copy has already been done during disp estimation
-            // -- if disparity estimation is not enabled, GPU->CPU copy is done in retrieveImage fct, and this function will take the time of copy.
-            if (ViewID == sl::zed::STEREO_LEFT || ViewID == sl::zed::STEREO_RIGHT)
-                slMat2cvMat(zed->retrieveImage(static_cast<sl::zed::SIDE> (ViewID))).copyTo(anaplyph);
-            else
-                slMat2cvMat(zed->getView(static_cast<sl::zed::VIEW_MODE> (ViewID))).copyTo(anaplyph);
 
-            cv::resize(anaplyph, anaplyphDisplay, DisplaySize);
-            imshow("VIEW", anaplyphDisplay);
+
+            //ViewID can be SIDE mode or VIEW mode :
+
+            if (ViewID >= sl::zed::LEFT && ViewID < sl::zed::LAST_SIDE)
+                slMat2cvMat(zed->retrieveImage(static_cast<sl::zed::SIDE> (ViewID))).copyTo(anaglyph);
+            else
+                slMat2cvMat(zed->getView(static_cast<sl::zed::VIEW_MODE> (ViewID - (int) sl::zed::LAST_SIDE))).copyTo(anaglyph);
+
+            cv::resize(anaglyph, anaglyphDisplay, DisplaySize);
+            imshow("VIEW", anaglyphDisplay);
 
             key = cv::waitKey(5);
 
@@ -269,46 +278,86 @@ int main(int argc, char **argv) {
                     zed->resetSelfCalibration();
                     break;
 
-                    //Change camera settings (here --> gain)
-                case 'g': //increase gain of 1
+                    //Change camera settings (here --> exposure)
+                case 'g': //increase exposure by 2
                 {
-                    int current_gain = zed->getCameraSettingsValue(sl::zed::ZED_GAIN) + 1;
-                    zed->setCameraSettingsValue(sl::zed::ZED_GAIN, current_gain);
-                    std::cout << "set Gain to " << current_gain << std::endl;
+                    int current_exposure = zed->getCameraSettingsValue(sl::zed::ZED_EXPOSURE);
+                    if (current_exposure < 99) {
+                        zed->setCameraSettingsValue(sl::zed::ZED_EXPOSURE, current_exposure + 2);
+                        std::cout << "set exposure to " << current_exposure + 2 << std::endl;
+                    }
                 }
                     break;
 
-                case 'h': //decrease gain of 1
+                case 'h': //decrease exposure by 2
                 {
-                    int current_gain = zed->getCameraSettingsValue(sl::zed::ZED_GAIN) - 1;
-                    zed->setCameraSettingsValue(sl::zed::ZED_GAIN, current_gain);
-                    std::cout << "set Gain to " << current_gain << std::endl;
+                    int current_exposure = zed->getCameraSettingsValue(sl::zed::ZED_EXPOSURE);
+                    std::cout << "current exposure " << current_exposure << std::endl;
+                    if (current_exposure > 10) {
+                        zed->setCameraSettingsValue(sl::zed::ZED_EXPOSURE, current_exposure - 2);
+                        std::cout << "set exposure to " << current_exposure - 2 << std::endl;
+                    }
                 }
                     break;
 
 
                     // ______________  VIEW __________________
+
+                    //From SIDE enum
                 case '0': // left
                     ViewID = 0;
+                    std::cout << "Current View switched to Left (rectified/aligned)" << std::endl;
                     break;
                 case '1': // right
                     ViewID = 1;
+                    std::cout << "Current View switched to Right (rectified/aligned)" << std::endl;
                     break;
-                case '2': // anaglyph
+                case '2': // left gray rectified
                     ViewID = 2;
+                    std::cout << "Current View switched to Gray Left (rectified/aligned)" << std::endl;
                     break;
-                case '3': // gray scale diff
+                case '3': // right gray rectified
                     ViewID = 3;
+                    std::cout << "Current View switched to Gray Right (rectified/aligned)" << std::endl;
                     break;
-                case '4': // Side by side
+                case '4': // left "raw"
                     ViewID = 4;
+                    std::cout << "Current View switched to Raw Left (not rectified)" << std::endl;
                     break;
-                case '5': // overlay
+                case '5': // right "raw"
                     ViewID = 5;
+                    std::cout << "Current View switched to Raw Right (not rectified)" << std::endl;
+                    break;
+                case '6': // gray left "raw"
+                    ViewID = 6;
+                    std::cout << "Current View switched to Raw Gray Left (not rectified)" << std::endl;
+                    break;
+                case '7': // gray right "raw"
+                    ViewID = 7;
+                    std::cout << "Current View switched to Raw Gray Right (not rectified)" << std::endl;
+                    break;
+
+
+                    //From VIEW enum
+                case '8': // anaglyph
+                    ViewID = 8;
+                    std::cout << "Current View switched to Anaglyph mode" << std::endl;
+                    break;
+                case '9': // Diff
+                    ViewID = 9;
+                    std::cout << "Current View switched to Difference mode" << std::endl;
+                    break;
+                case 's': // Side  by Side
+                    ViewID = 10;
+                    std::cout << "Current View switched to Side by Side mode" << std::endl;
+                    break;
+                case 'o': // Overlay
+                    ViewID = 11;
+                    std::cout << "Current View switched to Overlay mode" << std::endl;
                     break;
 
                     // ______________  Display Confidence Map __________________
-                case 's':
+                case 'c':
                     displayConfidenceMap = !displayConfidenceMap;
                     break;
 
@@ -345,6 +394,9 @@ int main(int argc, char **argv) {
 
             ConfidenceIdx = ConfidenceIdx < 1 ? 1 : ConfidenceIdx;
             ConfidenceIdx = ConfidenceIdx > 100 ? 100 : ConfidenceIdx;
+
+        } else {
+            key = cv::waitKey(5);
         }
     }
 

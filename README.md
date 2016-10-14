@@ -7,11 +7,11 @@ It demonstrates how to grab images and disparity map with the ZED SDK and link t
 **Warning :**
  - GPU->CPU readback is time-consuming
  - This sample is not designed to operate in real time
-     
+
 Both images and depth/disparity map are displayed.                                 
 Most of the functions of the ZED SDK are linked with a key press event (using OpenCV).
-  
-##Build the program
+
+## Build the program
 
 Open a terminal in With OpenCV directory and execute the following command:
 
@@ -19,22 +19,29 @@ Open a terminal in With OpenCV directory and execute the following command:
     $ cd build
     $ cmake ..
     $ make
- 
 
-##Run the program
+
+## Run the program
 
 Open a terminal in build directory and execute the following command:
 
     $ ./ZED\ with\ OpenCV [path to SVO file]
- 
-##Keyboard shortcuts
- 
-               Main Hotkeys              |            Display Hotkeys            
-----------------------------------------|---------------------------------------
- 'b'   : Decrease reliability index by 1 | '0'   : Left View                    
- 'n'   : Increase reliability index by 1 | '1'   : Right View                   
- 'r'   : Sensing Mode : RAW              | '2'   : Anaglyph View                
- 'f'   : Sensing Mode : FULL             | '3'   : Gray Scale Difference View   
- 's'   : Display Confidence Map          | '4'   : Side by Side View            
- 'w'   : Save Side by Side image in PNG  | '5'   : Overlay View                 
- 'v'   : Save Disparity image in PNG     | 'd'   : Toggle Disparity / Depth view
+
+## Keyboard shortcuts
+
+
+  Display hotkeys    |           Description      |  Hotkeys    |           Description                                           
+-------------|------------------------------------|-------------|------------------------------------
+ '0'         | Left image                         | 'a'         | Re-compute stereo alignment                                                 
+ '1'         | Right image                        | 'w'         | Save side by side images into a png file                                                  
+ '2'         | Left gray rectified image          | 'v'         | Save the disparity map in a png file                                                    
+ '3'         | Right gray rectified image         | 'r'         | Sensing mode `STANDARD `                                                    
+ '4'         | Left raw image                     | 'f'         | Sensing mode `FILL `                                                    
+ '5'         | Right raw image                    | 'd'         | Toggle disparity / depth map display                                                    
+ '6'         | Left gray raw image                | 'g'         | Increase camera exposure                                                    
+ '7'         | Right gray raw image               | 'h'         | Decrease camera exposure                
+ '8'         | Anaglyph view                      | 'b'         | Increase disparity map confidence threshold                                                   
+ '9'         | Difference view                    | 'n'         | Decrease disparity map confidence threshold                    
+ 's'         | Left and Right image side by side  | 'q'         | Quit the sample            
+ 'o'         | Overlay view                       | -         | -                     
+ 'c'         | Display depth map confidence       | -         | -        
