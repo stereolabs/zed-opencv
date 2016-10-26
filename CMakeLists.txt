@@ -28,6 +28,7 @@ ELSE() # Linux
 	SET(VERSION_REQ_OCV "2.4")
 	SET(VERSION_REQ_CUDA "")
      endif()
+     add_definitions(-Wno-format-extra-args)
 ENDIF(WIN32)
 
 find_package(OpenCV ${VERSION_REQ_OCV} REQUIRED)
