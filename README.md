@@ -76,7 +76,7 @@ Sensing mode         | Toggle between `STANDARD` sensing mode (faster, should be
 Exit         | Quit the application.             | 'q'
 
 
- ## Limitations
+## Limitations
 
  - For simplicity's sake, this sample uses GPU->CPU data transfer to retrieve and display the images with OpenCV.
  - For optimal performance, we recommend using a direct device to device copy of the ZED SDK GPU buffer to OpenGL buffer, rather than using the CPU as an intermediate.
