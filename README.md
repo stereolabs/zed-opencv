@@ -6,12 +6,12 @@ This sample shows how to interface the ZED SDK and OpenCV to acquire and display
 
 - First, download the latest version of the ZED SDK on [stereolabs.com](https://www.stereolabs.com).
 - Make sure you have OpenCV installed.
-- For more information, check out this [blog post](https://www.stereolabs.com/blog/index.php/2015/06/28/zed-with-opencv/) and read the ZED [API documentation](https://www.stereolabs.com/developers/documentation/API/).
+- For more information, check out the ZED [API documentation](https://www.stereolabs.com/developers/documentation/API/).
 
 ### Prerequisites
 
 - Windows 7 64bits or later, Ubuntu 16.04
-- [ZED SDK](https://www.stereolabs.com/developers/) and its dependencies ([CUDA](https://developer.nvidia.com/cuda-downloads), [OpenCV 3.1](http://opencv.org/downloads.html))
+- [ZED SDK 2.0](https://www.stereolabs.com/developers/) and its dependencies ([CUDA](https://developer.nvidia.com/cuda-downloads), [OpenCV 3.1](http://opencv.org/downloads.html))
 
 
 ## Build the program
@@ -51,7 +51,7 @@ It shows how to use the basic functions of the ZED SDK:
 
   - Capture stereo video from the ZED or an SVO file.
   - Capture depth map as a compatible 32bits float OpenCV matrix.
-  - Display stereo video in several viewing modes: raw, rectified, grayscale, anaglyph, overlay, difference and side-by-side.
+  - Display stereo video in several viewing modes: raw, rectified, gray-scale, anaglyph, overlay, difference and side-by-side.
   - Display disparity and depth map.
   - Adjust several depth parameters: depth sensing mode, max range, depth confidence.
 
@@ -69,8 +69,7 @@ Side by Side view        | Display the left and right images side by side.  |'2'
 Overlay view         | Display overlay view.        |      '3'
 Difference view         | Display difference view. |           '4'         
 Anaglyph view         | Display anaglyph view. |            '5'                 
-Depth view         | Toggle between disparity / depth map display.           |           'd'                                                      
-Confidence view         | Display depth map confidence. The confidence value is mapped between 0 (high confidence threshold, sparse data) and 100 (low confidence threshold, dense data).       | 'c'
+Confidence view         | Display depth map confidence. The confidence value is mapped between 0 (high confidence threshold, sparse data) and 100 (low confidence threshold, dense data).       | '6'
 Confidence threshold        | Increase/Decrease depth map confidence threshold.    |       'b'/'n'     
 Sensing mode         | Toggle between `STANDARD` sensing mode (faster, should be used by most applications) / `FILL` (fully dense and filtered depth map).     |             's'                                                    
 Exit         | Quit the application.             | 'q'
