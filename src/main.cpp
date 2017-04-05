@@ -40,6 +40,7 @@ typedef struct mouseOCVStruct {
 mouseOCV mouseStruct;
 
 static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, void * param);
+cv::Mat slMat2cvMat(sl::Mat& input);
 
 int main(int argc, char **argv) {
 
@@ -65,10 +66,11 @@ int main(int argc, char **argv) {
     // Best way of sharing sl::Mat and cv::Mat :
     // Create a sl::Mat and then construct a cv::Mat using the ptr to sl::Mat data.
     Resolution image_size = zed.getResolution();
-    sl::Mat image_zed(image_size, MAT_TYPE_8U_C4); // Create a sl::Mat to handle Left image
-    cv::Mat image_ocv(image_zed.getHeight(), image_zed.getWidth(), CV_8UC4, image_zed.getPtr<sl::uchar1>(sl::MEM_CPU)); // Create an OpenCV Mat that shares sl::Mat buffer
-    sl::Mat depth_image_zed(image_size, MAT_TYPE_8U_C4);
-    cv::Mat depth_image_ocv(depth_image_zed.getHeight(), depth_image_zed.getWidth(), CV_8UC4, depth_image_zed.getPtr<sl::uchar1>(sl::MEM_CPU));
+    sl::Mat image_zed(image_size,sl::MAT_TYPE_8U_C4); // Create a sl::Mat to handle Left image
+	cv::Mat image_ocv = slMat2cvMat(image_zed);
+	sl::Mat depth_image_zed(image_size, MAT_TYPE_8U_C4);
+	cv::Mat depth_image_ocv = slMat2cvMat(depth_image_zed);
+
 
     // Create OpenCV images to display (lower resolution to fit the screen)
     cv::Size displaySize(720, 404);
@@ -133,3 +135,25 @@ static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, v
         std::cout << std::endl;
     }
 }
+
+
+cv::Mat slMat2cvMat(sl::Mat& input) {
+	//convert MAT_TYPE to CV_TYPE
+	int cv_type = -1;
+	switch (input.getDataType()) {
+		case sl::MAT_TYPE_32F_C1: cv_type = CV_32FC1; break;
+		case sl::MAT_TYPE_32F_C2: cv_type = CV_32FC2; break;
+		case sl::MAT_TYPE_32F_C3: cv_type = CV_32FC3; break;
+		case sl::MAT_TYPE_32F_C4: cv_type = CV_32FC4; break;
+		case sl::MAT_TYPE_8U_C1: cv_type = CV_8UC1; break;
+		case sl::MAT_TYPE_8U_C2: cv_type = CV_8UC2; break;
+		case sl::MAT_TYPE_8U_C3: cv_type = CV_8UC3; break;
+		case sl::MAT_TYPE_8U_C4: cv_type = CV_8UC4; break;
+		default: break;
+	}
+
+	// cv::Mat data requires a uchar* pointer. Therefore, we get the uchar1 pointer from sl::Mat (getPtr<T>())
+	//cv::Mat and sl::Mat will share the same memory pointer
+	return cv::Mat(input.getHeight(), input.getWidth(), cv_type, input.getPtr<sl::uchar1>(MEM_CPU));
+}
+
