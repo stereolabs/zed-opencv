@@ -55,7 +55,7 @@ It shows how to use the basic functions of the ZED SDK:
   - Display disparity and depth map.
   - Adjust several depth parameters: depth sensing mode, max range, depth confidence.
 
-To learn how to add camera tracking capabilities, see the dedicated [tracking sample](https://github.com/stereolabs/zed-tracking-viewer).
+To learn how to add camera tracking capabilities, see the dedicated [tracking sample](https://github.com/stereolabs/zed-examples/tree/master/positional%20tracking).
 
 ### Keyboard shortcuts
 
