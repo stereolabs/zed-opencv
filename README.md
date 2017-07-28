@@ -1,22 +1,14 @@
 # Stereolabs ZED - OpenCV
 
-This sample shows how to interface the ZED SDK and OpenCV to acquire and display ZED stereo images and depth map.
+This sample is the perfect place to get started coding with the ZED and OpenCV. It shows how to:
 
-## Getting started
-
-- First, download the latest version of the ZED SDK on [stereolabs.com](https://www.stereolabs.com).
-- Make sure you have OpenCV installed.
-- For more information, check out the ZED [API documentation](https://www.stereolabs.com/developers/documentation/API/).
-
-### Prerequisites
-
-- Windows 7 64bits or later, Ubuntu 16.04
-- [ZED SDK 2.0](https://www.stereolabs.com/developers/) and its dependencies ([CUDA](https://developer.nvidia.com/cuda-downloads), [OpenCV 3.1](http://opencv.org/downloads.html))
-
+  - Capture image, depth and point cloud from the ZED.
+  - Convert image and depth map to compatible 32-bits float OpenCV matrix.
+  - Display video and depth with OpenCV.
+  - Adjust several depth parameters: depth sensing mode, quality, units, resolution.
+  - Save side by side image, depth image and point cloud in various formats
 
 ## Build the program
-
-Download the sample and follow these instructions:
 
 #### Build for Windows
 
@@ -42,20 +34,7 @@ Open a terminal in the sample directory and execute the following command:
 
         ./ZED\ with\ OpenCV [path to SVO file]
 
-You can optionally provide an SVO file path (recorded stereo video of the ZED)
-
-## Features
-
-This sample is the perfect place to get started coding with the ZED.
-It shows how to use the basic functions of the ZED SDK:
-
-  - Capture stereo video from the ZED or an SVO file.
-  - Capture depth map as a compatible 32bits float OpenCV matrix.
-  - Display stereo video in several viewing modes: raw, rectified, gray-scale, anaglyph, overlay, difference and side-by-side.
-  - Display disparity and depth map.
-  - Adjust several depth parameters: depth sensing mode, max range, depth confidence.
-
-To learn how to add camera tracking capabilities, see the dedicated [tracking sample](https://github.com/stereolabs/zed-examples/tree/master/positional%20tracking).
+You can optionally provide an SVO file path (recorded stereo video of the ZED).
 
 ### Keyboard shortcuts
 
@@ -63,19 +42,9 @@ This table lists keyboard shortcuts that you can use in the sample application.
 
 Parameter             | Description                   |   Hotkey
 ---------------------|------------------------------------|-------------------------------------------------
- Left image view      | Display left rectified RGB image.                      |         '0'                             
-Right image view      | Display right rectified RGB image.                        |          '1'                              
-Side by Side view        | Display the left and right images side by side.  |'2'
-Overlay view         | Display overlay view.        |      '3'
-Difference view         | Display difference view. |           '4'         
-Anaglyph view         | Display anaglyph view. |            '5'                 
-Confidence view         | Display depth map confidence. The confidence value is mapped between 0 (high confidence threshold, sparse data) and 100 (low confidence threshold, dense data).       | '6'
-Confidence threshold        | Increase/Decrease depth map confidence threshold.    |       'b'/'n'     
-Sensing mode         | Toggle between `STANDARD` sensing mode (faster, should be used by most applications) / `FILL` (fully dense and filtered depth map).     |             's'                                                    
+Save Side by Side      | Save side by side image.       |   's'                             
+Save Depth             | Save depth image.              |   'p'                              
+Save Point Cloud       | Save 3D point cloud.        |   'd'
+Switch cloud format    | Toggle between point cloud formats.    |   'm'
+Switch depth format    | Toggle between depth image formats. |   'n'                                                      
 Exit         | Quit the application.             | 'q'
-
-
-## Limitations
-
- - For simplicity's sake, this sample uses GPU->CPU data transfer to retrieve and display the images with OpenCV.
- - For optimal performance, we recommend using a direct device to device copy of the ZED SDK GPU buffer to OpenGL buffer, rather than using the CPU as an intermediate.
