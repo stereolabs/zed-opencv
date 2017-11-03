@@ -23,12 +23,18 @@
  ** Depth and images are captured with the ZED SDK, converted to OpenCV format and displayed. **
  ***********************************************************************************************/
 
+ // ZED includes
 #include <sl/Camera.hpp>
+
+// OpenCV includes
+#include <opencv2/opencv.hpp>
+
+// Sample includes
 #include <SaveDepth.hpp>
 
 using namespace sl;
 
-cv::Mat slMat2cvMat(sl::Mat& input);
+cv::Mat slMat2cvMat(Mat& input);
 void printHelp();
 
 int main(int argc, char **argv) {
@@ -64,11 +70,11 @@ int main(int argc, char **argv) {
 
     // To share data between sl::Mat and cv::Mat, use slMat2cvMat()
     // Only the headers and pointer to the sl::Mat are copied, not the data itself
-    sl::Mat image_zed(new_width, new_height, sl::MAT_TYPE_8U_C4);
+    Mat image_zed(new_width, new_height, MAT_TYPE_8U_C4);
     cv::Mat image_ocv = slMat2cvMat(image_zed);
-    sl::Mat depth_image_zed(new_width, new_height, sl::MAT_TYPE_8U_C4);
+    Mat depth_image_zed(new_width, new_height, MAT_TYPE_8U_C4);
     cv::Mat depth_image_ocv = slMat2cvMat(depth_image_zed);
-    sl::Mat point_cloud;
+    Mat point_cloud;
 
     // Loop until 'q' is pressed
     char key = ' ';
@@ -100,18 +106,18 @@ int main(int argc, char **argv) {
 /**
 * Conversion function between sl::Mat and cv::Mat
 **/
-cv::Mat slMat2cvMat(sl::Mat& input) {
+cv::Mat slMat2cvMat(Mat& input) {
     // Mapping between MAT_TYPE and CV_TYPE
     int cv_type = -1;
     switch (input.getDataType()) {
-        case sl::MAT_TYPE_32F_C1: cv_type = CV_32FC1; break;
-        case sl::MAT_TYPE_32F_C2: cv_type = CV_32FC2; break;
-        case sl::MAT_TYPE_32F_C3: cv_type = CV_32FC3; break;
-        case sl::MAT_TYPE_32F_C4: cv_type = CV_32FC4; break;
-        case sl::MAT_TYPE_8U_C1: cv_type = CV_8UC1; break;
-        case sl::MAT_TYPE_8U_C2: cv_type = CV_8UC2; break;
-        case sl::MAT_TYPE_8U_C3: cv_type = CV_8UC3; break;
-        case sl::MAT_TYPE_8U_C4: cv_type = CV_8UC4; break;
+        case MAT_TYPE_32F_C1: cv_type = CV_32FC1; break;
+        case MAT_TYPE_32F_C2: cv_type = CV_32FC2; break;
+        case MAT_TYPE_32F_C3: cv_type = CV_32FC3; break;
+        case MAT_TYPE_32F_C4: cv_type = CV_32FC4; break;
+        case MAT_TYPE_8U_C1: cv_type = CV_8UC1; break;
+        case MAT_TYPE_8U_C2: cv_type = CV_8UC2; break;
+        case MAT_TYPE_8U_C3: cv_type = CV_8UC3; break;
+        case MAT_TYPE_8U_C4: cv_type = CV_8UC4; break;
         default: break;
     }
 
