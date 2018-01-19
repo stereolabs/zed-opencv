@@ -24,7 +24,7 @@
  ***********************************************************************************************/
 
  // ZED includes
-#include <sl/Camera.hpp>
+#include <sl_zed/Camera.hpp>
 
 // OpenCV includes
 #include <opencv2/opencv.hpp>
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     // Open the camera
     ERROR_CODE err = zed.open(init_params);
     if (err != SUCCESS) {
-        printf("%s\n", errorCode2str(err).c_str());
+        printf("%s\n", toString(err).c_str());
         zed.close();
         return 1; // Quit if an error occurred
     }

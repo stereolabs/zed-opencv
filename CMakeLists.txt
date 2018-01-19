@@ -11,12 +11,12 @@ SET(EXECUTABLE_OUTPUT_PATH ".")
 
 find_package(ZED 2 REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(CUDA REQUIRED)
+find_package(CUDA ${ZED_CUDA_VERSION} EXACT REQUIRED)
 
 IF(NOT WIN32)
     add_definitions(-Wno-format-extra-args)
     SET(SPECIAL_OS_LIBS "pthread" "X11")
-ENDIF(WIN32)
+ENDIF()
 
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${ZED_INCLUDE_DIRS})

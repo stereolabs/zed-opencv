@@ -10,7 +10,7 @@
 #include <thread>
 
 #include <opencv2/opencv.hpp>
-#include <sl/Camera.hpp>
+#include <sl_zed/Camera.hpp>
 
 const std::string helpString = "[d] Save Depth, [n] Change Depth format, [p] Save Point Cloud, [m] Change Point Cloud format, [q] Quit";
 const std::string prefixPointCloud = "Cloud_"; // Default PointCloud output file prefix
