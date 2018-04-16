@@ -47,7 +47,8 @@ int main(int argc, char **argv) {
     init_params.camera_resolution = RESOLUTION_HD1080;
     init_params.depth_mode = DEPTH_MODE_PERFORMANCE;
     init_params.coordinate_units = UNIT_METER;
-
+    if (argc > 1) init_params.svo_input_filename.set(argv[1]);
+        
     // Open the camera
     ERROR_CODE err = zed.open(init_params);
     if (err != SUCCESS) {
