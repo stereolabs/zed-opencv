@@ -15,13 +15,13 @@ This sample is the perfect place to get started coding with the ZED and OpenCV. 
 
 ### Prerequisites
 
-- Windows 7 64bits or later, Ubuntu 16.04
+- Windows 7 64bits or later, Ubuntu 16.04 or 18.04
 - [ZED SDK](https://www.stereolabs.com/developers/) and its dependencies ([CUDA](https://developer.nvidia.com/cuda-downloads), [OpenCV](https://github.com/opencv/opencv/releases))
 
 ### C++
 
-You can read the guide on how to build and launch this sample for c++ [here](https://github.com/stereolabs/zed-opencv/tree/master/cpp)
+Read the [guide](./cpp) to learn how to build and launch this sample in C++.
 
 ### Python
 
-You can read the guide on how to build and launch this sample for python [here](https://github.com/stereolabs/zed-opencv/tree/master/python)
+Read the [guide](./python) to learn how to build and launch this sample in Python.
