@@ -18,43 +18,10 @@ This sample is the perfect place to get started coding with the ZED and OpenCV. 
 - Windows 7 64bits or later, Ubuntu 16.04
 - [ZED SDK](https://www.stereolabs.com/developers/) and its dependencies ([CUDA](https://developer.nvidia.com/cuda-downloads), [OpenCV](https://github.com/opencv/opencv/releases))
 
-## Build the program
+### C++
 
-#### Build for Windows
+You can read the guide on how to build and launch this sample for c++ [here](https://github.com/stereolabs/zed-opencv/tree/master/cpp)
 
-- Create a "build" folder in the source folder
-- Open cmake-gui and select the source and build folders
-- Generate the Visual Studio `Win64` solution
-- Open the resulting solution and change configuration to `Release`
-- Build solution
+### Python
 
-#### Build for Linux
-
-Open a terminal in the sample directory and execute the following command:
-
-    mkdir build
-    cd build
-    cmake ..
-    make
-
-## Run the program
-
-- Navigate to the build directory and launch the executable file
-- Or open a terminal in the build directory and run the sample :
-
-        ./ZED\ with\ OpenCV [path to SVO file]
-
-You can optionally provide an SVO file path (recorded stereo video of the ZED).
-
-### Keyboard shortcuts
-
-This table lists keyboard shortcuts that you can use in the sample application.
-
-Parameter             | Description                   |   Hotkey
----------------------|------------------------------------|-------------------------------------------------
-Save Side by Side      | Save side by side image.       |   's'                             
-Save Depth             | Save depth image.              |   'p'                              
-Save Point Cloud       | Save 3D point cloud.        |   'd'
-Switch cloud format    | Toggle between point cloud formats.    |   'm'
-Switch depth format    | Toggle between depth image formats. |   'n'                                                      
-Exit         | Quit the application.             | 'q'
+You can read the guide on how to build and launch this sample for python [here](https://github.com/stereolabs/zed-opencv/tree/master/python)
