@@ -129,6 +129,6 @@ void saveSbSImage(Camera& zed, std::string filename) {
     buffer_cv = cv::Mat(buffer_sl.getHeight(), buffer_sl.getWidth(), CV_8UC4, buffer_sl.getPtr<sl::uchar1>(MEM_CPU));
     buffer_cv.copyTo(right_image);
 
-    cv::cvtColor(sbs_image, sbs_image, CV_RGBA2RGB);
+    cv::cvtColor(sbs_image, sbs_image, cv::COLOR_RGBA2RGB);
     cv::imwrite(filename, sbs_image);
 }
