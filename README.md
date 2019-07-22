@@ -27,3 +27,60 @@ Read the [guide](./cpp) to learn how to build and launch this sample in C++.
 ### Python
 
 Read the [guide](./python) to learn how to build and launch this sample in Python.
+
+
+## Installing OpenCV
+
+### Installing OpenCV on Windows
+
+OpenCV provides already compiled binaries, it can be downloaded at https://opencv.org/releases/
+
+### Installing OpenCV on Linux
+
+Some sample can require OpenCV, here is a tutorial on how to install it.
+
+OpenCV can be downloaded at this location : https://opencv.org/releases/
+
+For a more detailed OpenCV tutorial installation, [refer to the opencv documention](https://docs.opencv.org/4.1.0/d7/d9f/tutorial_linux_install.html).
+
+#### Installation steps
+
+- Install the required dependencies
+
+```bash
+sudo apt-get install build-essential cmake libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+```
+
+- Download source archive from http://opencv.org/releases.html and extract it
+
+```bash
+wget https://github.com/opencv/opencv/archive/4.1.0.zip -O /tmp/opencv_src.zip
+cd ~/
+unzip /tmp/opencv_src.zip ; rm /tmp/opencv_src.zip
+```
+
+- Navigate to the extracted sources, create a temporary build directory and enter it. For example,
+
+```bash
+cd ~/opencv-*
+mkdir build
+cd build
+```
+
+- Run cmake
+
+```bash
+cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DWITH_OPENGL=ON ..
+```
+
+- Execute make. The compilation can take a while
+
+```bash
+make -j$(nproc)
+```
+
+- Install the libraries
+
+```bash
+sudo make install
+```
