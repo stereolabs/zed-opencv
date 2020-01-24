@@ -15,7 +15,7 @@ This sample is the perfect place to get started coding with the ZED and OpenCV. 
 
 ### Prerequisites
 
-- Windows 7 64bits or later, Ubuntu 16.04 or 18.04
+- Windows 10, Ubuntu LTS
 - [ZED SDK](https://www.stereolabs.com/developers/) and its dependencies ([CUDA](https://developer.nvidia.com/cuda-downloads), [OpenCV](https://github.com/opencv/opencv/releases))
 
 OpenCV can be installed from source on Linux, please refer to this [guide](https://www.stereolabs.com/docs/getting-started/application-development/#building-on-linux-and-jetson) to proceed with the installation.

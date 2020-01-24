@@ -1,4 +1,4 @@
-# Stereolabs ZED - OpenCV C++
+# Stereolabs ZED - OpenCV
 
 This sample is the perfect place to get started coding with the ZED and OpenCV. It shows how to:
 
@@ -15,7 +15,7 @@ This sample is the perfect place to get started coding with the ZED and OpenCV. 
 
 ### Prerequisites
 
-- Windows 7 64bits or later, Ubuntu 16.04 or 18.04
+- Windows 10, Ubuntu LTS
 - [ZED SDK](https://www.stereolabs.com/developers/) and its dependencies ([CUDA](https://developer.nvidia.com/cuda-downloads), [OpenCV](https://github.com/opencv/opencv/releases))
 
 ## Build the program
@@ -32,7 +32,7 @@ Download the sample and follow the instructions below: [More](https://www.stereo
 
 #### Build for Linux
 
-Open a terminal in the cpp directory and execute the following command:
+Open a terminal in the sample directory and execute the following command:
 
     mkdir build
     cd build

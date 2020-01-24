@@ -11,47 +11,47 @@ path = "./"
 count_save = 0
 mode_point_cloud = 0
 mode_depth = 0
-point_cloud_format = sl.POINT_CLOUD_FORMAT.POINT_CLOUD_FORMAT_XYZ_ASCII
-depth_format = sl.DEPTH_FORMAT.DEPTH_FORMAT_PNG
+point_cloud_format_ext = ".ply"
+depth_format_ext = ".png"
 
-def get_depth_format_name(f) :
-
-    if f == sl.DEPTH_FORMAT.DEPTH_FORMAT_PNG :
-        return "PNG"
-    elif f == sl.DEPTH_FORMAT.DEPTH_FORMAT_PFM :
-        return "PFM"
-    elif f == sl.DEPTH_FORMAT.DEPTH_FORMAT_PGM :
-        return "PGM"
-    else :
-        return ""
-
-def get_point_cloud_format_name(f) :
-
-    if f == sl.POINT_CLOUD_FORMAT.POINT_CLOUD_FORMAT_XYZ_ASCII :
-        return "XYZ"
-    elif f == sl.POINT_CLOUD_FORMAT.POINT_CLOUD_FORMAT_PCD_ASCII :
-        return "PCD"
-    elif f == sl.POINT_CLOUD_FORMAT.POINT_CLOUD_FORMAT_PLY_ASCII :
-        return "PLY"
-    elif f == sl.POINT_CLOUD_FORMAT.POINT_CLOUD_FORMAT_VTK_ASCII :
-        return "VTK"
-    else :
-        return ""
+def point_cloud_format_name(): 
+    global mode_point_cloud
+    if mode_point_cloud > 3:
+        mode_point_cloud = 0
+    switcher = {
+        0: ".xyz",
+        1: ".pcd",
+        2: ".ply",
+        3: ".vtk",
+    }
+    return switcher.get(mode_point_cloud, "nothing") 
+  
+def depth_format_name(): 
+    global mode_depth
+    if mode_depth > 2:
+        mode_depth = 0
+    switcher = {
+        0: ".png",
+        1: ".pfm",
+        2: ".pgm",
+    }
+    return switcher.get(mode_depth, "nothing") 
 
 def save_point_cloud(zed, filename) :
     print("Saving Point Cloud...")
-    saved = sl.save_camera_point_cloud_as(zed, point_cloud_format, filename, True)
+    tmp = sl.Mat()
+    zed.retrieve_measure(tmp, sl.MEASURE.DEPTH)
+    saved = (tmp.write(filename + depth_format_ext) == sl.ERROR_CODE.SUCCESS)
     if saved :
         print("Done")
     else :
         print("Failed... Please check that you have permissions to write on disk")
 
 def save_depth(zed, filename) :
-    max_value = 65535.
-    scale_factor = max_value / zed.get_depth_max_range_value()
-
     print("Saving Depth Map...")
-    saved = sl.save_camera_depth_as(zed, depth_format, filename, scale_factor)
+    tmp = sl.Mat()
+    zed.retrieve_measure(tmp, sl.MEASURE.XYZRGBA)
+    saved = (tmp.write(filename + point_cloud_format_ext) == sl.ERROR_CODE.SUCCESS)
     if saved :
         print("Done")
     else :
@@ -60,11 +60,11 @@ def save_depth(zed, filename) :
 def save_sbs_image(zed, filename) :
 
     image_sl_left = sl.Mat()
-    zed.retrieve_image(image_sl_left, sl.VIEW.VIEW_LEFT)
+    zed.retrieve_image(image_sl_left, sl.VIEW.LEFT)
     image_cv_left = image_sl_left.get_data()
 
     image_sl_right = sl.Mat()
-    zed.retrieve_image(image_sl_right, sl.VIEW.VIEW_RIGHT)
+    zed.retrieve_image(image_sl_right, sl.VIEW.RIGHT)
     image_cv_right = image_sl_right.get_data()
 
     sbs_image = np.concatenate((image_cv_left, image_cv_right), axis=1)
@@ -76,23 +76,23 @@ def process_key_event(zed, key) :
     global mode_depth
     global mode_point_cloud
     global count_save
-    global depth_format
-    global point_cloud_format
+    global depth_format_ext
+    global point_cloud_format_ext
 
     if key == 100 or key == 68:
         save_depth(zed, path + prefix_depth + str(count_save))
         count_save += 1
     elif key == 110 or key == 78:
         mode_depth += 1
-        depth_format = sl.DEPTH_FORMAT(mode_depth % 3)
-        print("Depth format: ", get_depth_format_name(depth_format))
+        depth_format_ext = depth_format_name()
+        print("Depth format: ", depth_format_ext)
     elif key == 112 or key == 80:
         save_point_cloud(zed, path + prefix_point_cloud + str(count_save))
         count_save += 1
     elif key == 109 or key == 77:
         mode_point_cloud += 1
-        point_cloud_format = sl.POINT_CLOUD_FORMAT(mode_point_cloud % 4)
-        print("Point Cloud format: ", get_point_cloud_format_name(point_cloud_format))
+        point_cloud_format_ext = point_cloud_format_name()
+        print("Point Cloud format: ", point_cloud_format_ext)
     elif key == 104 or key == 72:
         print(help_string)
     elif key == 115:
@@ -116,9 +116,9 @@ def main() :
 
     # Set configuration parameters
     init = sl.InitParameters()
-    init.camera_resolution = sl.RESOLUTION.RESOLUTION_HD1080
-    init.depth_mode = sl.DEPTH_MODE.DEPTH_MODE_PERFORMANCE
-    init.coordinate_units = sl.UNIT.UNIT_METER
+    init.camera_resolution = sl.RESOLUTION.HD1080
+    init.depth_mode = sl.DEPTH_MODE.PERFORMANCE
+    init.coordinate_units = sl.UNIT.MILLIMETER
     if len(sys.argv) >= 2 :
         init.svo_input_filename = sys.argv[1]
 
@@ -134,16 +134,16 @@ def main() :
 
     # Set runtime parameters after opening the camera
     runtime = sl.RuntimeParameters()
-    runtime.sensing_mode = sl.SENSING_MODE.SENSING_MODE_STANDARD
+    runtime.sensing_mode = sl.SENSING_MODE.STANDARD
 
     # Prepare new image size to retrieve half-resolution images
-    image_size = zed.get_resolution()
-    new_width = image_size.width /2
-    new_height = image_size.height /2
+    image_size = zed.get_camera_information().camera_resolution
+    image_size.width = image_size.width /2
+    image_size.height = image_size.height /2
 
     # Declare your sl.Mat matrices
-    image_zed = sl.Mat(new_width, new_height, sl.MAT_TYPE.MAT_TYPE_8U_C4)
-    depth_image_zed = sl.Mat(new_width, new_height, sl.MAT_TYPE.MAT_TYPE_8U_C4)
+    image_zed = sl.Mat(image_size.width, image_size.height, sl.MAT_TYPE.U8_C4)
+    depth_image_zed = sl.Mat(image_size.width, image_size.height, sl.MAT_TYPE.U8_C4)
     point_cloud = sl.Mat()
 
     key = ' '
@@ -151,10 +151,10 @@ def main() :
         err = zed.grab(runtime)
         if err == sl.ERROR_CODE.SUCCESS :
             # Retrieve the left image, depth image in the half-resolution
-            zed.retrieve_image(image_zed, sl.VIEW.VIEW_LEFT, sl.MEM.MEM_CPU, int(new_width), int(new_height))
-            zed.retrieve_image(depth_image_zed, sl.VIEW.VIEW_DEPTH, sl.MEM.MEM_CPU, int(new_width), int(new_height))
+            zed.retrieve_image(image_zed, sl.VIEW.LEFT, sl.MEM.CPU, image_size)
+            zed.retrieve_image(depth_image_zed, sl.VIEW.DEPTH, sl.MEM.CPU, image_size)
             # Retrieve the RGBA point cloud in half resolution
-            zed.retrieve_measure(point_cloud, sl.MEASURE.MEASURE_XYZRGBA, sl.MEM.MEM_CPU, int(new_width), int(new_height))
+            zed.retrieve_measure(point_cloud, sl.MEASURE.XYZRGBA, sl.MEM.CPU, image_size)
 
             # To recover data from sl.Mat to use it with opencv, use the get_data() method
             # It returns a numpy array that can be used as a matrix with opencv
