@@ -115,12 +115,13 @@ def main() :
     zed = sl.Camera()
 
     # Set configuration parameters
-    init = sl.InitParameters()
+    input_type = sl.InputType()
+    if len(sys.argv) >= 2 :
+        input_type.set_from_svo_file(sys.argv[1])
+    init = sl.InitParameters(input_t=input_type)
     init.camera_resolution = sl.RESOLUTION.HD1080
     init.depth_mode = sl.DEPTH_MODE.PERFORMANCE
     init.coordinate_units = sl.UNIT.MILLIMETER
-    if len(sys.argv) >= 2 :
-        init.svo_input_filename = sys.argv[1]
 
     # Open the camera
     err = zed.open(init)
