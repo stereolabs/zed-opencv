@@ -11,7 +11,7 @@ This sample is the perfect place to get started coding with the ZED and OpenCV. 
 ## Getting started
 
 - First, download the latest version of the ZED SDK on [stereolabs.com](https://www.stereolabs.com).
-- For more information, read the ZED [API documentation](https://www.stereolabs.com/developers/documentation/API/).
+- For more information, read the ZED [Documentation](https://www.stereolabs.com/docs/) and [API documentation](https://www.stereolabs.com/docs/api/) or our [Community page](https://community.stereolabs.com)
 
 ### Prerequisites
 
@@ -84,3 +84,6 @@ make -j$(nproc)
 ```bash
 sudo make install
 ```
+
+## Support
+If you need assistance go to our Community site at https://community.stereolabs.com/
