@@ -40,8 +40,8 @@ def depth_format_name():
 def save_point_cloud(zed, filename) :
     print("Saving Point Cloud...")
     tmp = sl.Mat()
-    zed.retrieve_measure(tmp, sl.MEASURE.DEPTH)
-    saved = (tmp.write(filename + depth_format_ext) == sl.ERROR_CODE.SUCCESS)
+    zed.retrieve_measure(tmp, sl.MEASURE.XYZRGBA)
+    saved = (tmp.write(filename + point_cloud_format_ext) == sl.ERROR_CODE.SUCCESS)
     if saved :
         print("Done")
     else :
@@ -50,8 +50,8 @@ def save_point_cloud(zed, filename) :
 def save_depth(zed, filename) :
     print("Saving Depth Map...")
     tmp = sl.Mat()
-    zed.retrieve_measure(tmp, sl.MEASURE.XYZRGBA)
-    saved = (tmp.write(filename + point_cloud_format_ext) == sl.ERROR_CODE.SUCCESS)
+    zed.retrieve_measure(tmp, sl.MEASURE.DEPTH)
+    saved = (tmp.write(filename + depth_format_ext) == sl.ERROR_CODE.SUCCESS)
     if saved :
         print("Done")
     else :
