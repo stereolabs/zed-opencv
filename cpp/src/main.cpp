@@ -40,6 +40,9 @@ cv::Mat slMat2cvMat(Mat& input);
 cv::cuda::GpuMat slMat2cvMatGPU(Mat& input);
 #endif // HAVE_CUDA
 
+//Flag to disable the Display 
+#define ENABLE_DISPLAY 1
+
 void printHelp();
 
 int main(int argc, char **argv) {
@@ -109,8 +112,7 @@ int main(int argc, char **argv) {
             // Retrieve the RGBA point cloud in half-resolution
             // To learn how to manipulate and display point clouds, see Depth Sensing sample
             zed.retrieveMeasure(point_cloud, MEASURE::XYZRGBA, MEM::CPU, new_image_size);
-
-            // Display image and depth using cv:Mat which share sl:Mat data
+#if ENABLE_DISPLAY
             cv::imshow("Image", image_ocv);
 #ifdef HAVE_CUDA
             // download the Ocv GPU data from Device to Host to be displayed
@@ -118,9 +120,24 @@ int main(int argc, char **argv) {
 #endif
             cv::imshow("Depth", depth_image_ocv);
 
+
+#else
+            //Save Image and Depth video if the Display is disabled
+            cv::VideoWriter video_image("../Image.avi", cv::VideoWriter::fourcc('M','J','P','G'), 10, cv::Size(new_width,new_height));
+            video_image.write(image_ocv);
+#ifdef HAVE_CUDA
+            // download the Ocv GPU data from Device to Host to be displayed
+            depth_image_ocv_gpu.download(depth_image_ocv);
+#endif
+            cv::VideoWriter video_depth("../Depth.avi", cv::VideoWriter::fourcc('M','J','P','G'), 10, cv::Size(new_width,new_height));
+            video_depth.write(depth_image_ocv);            // Display image and depth using cv:Mat which share sl:Mat data
+            //std::cout<<"The key: "<<key<<std::endl;
+#endif
             // Handle key event
-            key = cv::waitKey(10);
-            processKeyEvent(zed, key);
+            if(ENABLE_DISPLAY)
+                key = cv::waitKey(10);
+            else
+                std::cin.get(key);           processKeyEvent(zed, key);
         }
     }
 
