@@ -2,6 +2,10 @@ import sys
 import numpy as np
 import pyzed.sl as sl
 import cv2
+import keyboard 
+
+#Flagto enable display
+ENABLE_DISPLAY = 1
 
 help_string = "[s] Save side by side image [d] Save Depth, [n] Change Depth format, [p] Save Point Cloud, [m] Change Point Cloud format, [q] Quit"
 prefix_point_cloud = "Cloud_"
@@ -162,10 +166,17 @@ def main() :
             image_ocv = image_zed.get_data()
             depth_image_ocv = depth_image_zed.get_data()
 
-            cv2.imshow("Image", image_ocv)
-            cv2.imshow("Depth", depth_image_ocv)
-
-            key = cv2.waitKey(10)
+            if ENABLE_DISPLAY == 1 :
+                cv2.imshow("Image",image_ocv)
+                cv2.imshow("Depth", depth_image_ocv)
+                key = cv2.waitKey(10)
+            else :
+                image = cv2.VideoWriter('Image.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (image_size.width, image_size.height))
+                depth = cv2.VideoWriter('Depth.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (image_size.width, image_size.height))
+                image.write(image_ocv)
+                image.write(depth_image_ocv)
+                key = input()
+                key= ord(key)
 
             process_key_event(zed, key)
 
