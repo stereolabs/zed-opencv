@@ -135,10 +135,9 @@ def main() :
 
     # Set runtime parameters after opening the camera
     runtime = sl.RuntimeParameters()
-    runtime.sensing_mode = sl.SENSING_MODE.STANDARD
 
     # Prepare new image size to retrieve half-resolution images
-    image_size = zed.get_camera_information().camera_resolution
+    image_size = zed.get_camera_information().camera_configuration.resolution
     image_size.width = image_size.width /2
     image_size.height = image_size.height /2
 
