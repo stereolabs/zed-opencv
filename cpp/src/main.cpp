@@ -29,7 +29,9 @@
 // OpenCV includes
 #include <opencv2/opencv.hpp>
 // OpenCV dep
-#include <opencv2/cvconfig.h>
+
+// Not sure this one is necessary.
+// #include <opencv2/cvconfig.h>
 
 // Sample includes
 #include <SaveDepth.hpp>
@@ -67,10 +69,9 @@ int main(int argc, char **argv) {
 
     // Set runtime parameters after opening the camera
     RuntimeParameters runtime_parameters;
-    runtime_parameters.sensing_mode = SENSING_MODE::STANDARD;
 
     // Prepare new image size to retrieve half-resolution images
-    Resolution image_size = zed.getCameraInformation().camera_resolution;
+    Resolution image_size = zed.getCameraInformation().camera_configuration.resolution;
     int new_width = image_size.width / 2;
     int new_height = image_size.height / 2;
 
